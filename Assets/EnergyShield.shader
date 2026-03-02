@@ -1,0 +1,172 @@
+Shader "Custom/EnergyShield"
+{
+    Properties
+    {
+        [HDR] _FrontColor ("FrontColor", Color) = (0, 1, 1, 1)
+        [HDR] _BackColor ("BackColor", Color) = (0, 0.5, 1, 1)
+        [HDR] _FresnelColor ("FresnelColor", Color) = (1, 0, 1, 1)
+        _MainTexture ("Shield Texture", 2D) = "white" {}
+        _Smoothness ("Smoothness", Range(0,1)) = 0.5
+        _Metallic ("Metallic", Range(0,1)) = 0.0
+        _Alpha ("Alpha", Range(0,1)) = 0.0
+        
+        [Vector3]_VertexAmount ("VertexAmount", Vector) = (0.0, 0.0, 0.0)
+        _VertexFreq ("VertexFreq", float) = 1
+        
+        _CloudTexture ("Cloud Texture (R)", 2D) = "white" {}
+        [HDR] _CloudColor ("CloudColor", Color) = (0.8, 0.8, 0.8, 1)
+        _CloudDirection ("Cloud Direction/Speed", Vector) = (0.1, 0.1, 0, 0)
+        
+        _DistortionTexture ("Distortion Texture (Normal/Noise)", 2D) = "bump" {}
+        _DistortionAmount ("Distortion Amount", Range(0, 1)) = 0.1
+        _DistortionSpeed ("Distortion Speed", float) = 0.1
+    }
+
+    SubShader
+    {
+        Tags { "RenderType"="Transparent" "Queue"="Transparent" "RenderPipeline"="UniversalPipeline"}
+        LOD 100
+        ZWrite Off
+        Blend SrcAlpha One // Additive blending
+        //Blend One Zero
+        Cull Off
+        
+        Pass
+        {
+            HLSLPROGRAM
+
+            #pragma vertex vert
+            #pragma fragment frag
+            
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+            
+            struct Attributes
+            {
+                float4 positionOS   : POSITION;
+                float2 uv           : TEXCOORD0;
+                float2 uv2          : TEXCOORD1;
+                float3 normalOS     : NORMAL;
+            };
+            
+            struct Varyings
+            {
+                float4 positionCS   : SV_POSITION;
+                float2 uv           : TEXCOORD0;
+                float2 uv2          : TEXCOORD1;
+                float3 worldNormal  : TEXCOORD2;
+                float3 worldPos     : TEXCOORD3;
+                float4 screenPos    : TEXCOORD4;
+            };
+
+            TEXTURE2D(_MainTexture);          
+            SAMPLER(sampler_MainTexture);  
+            TEXTURE2D(_CloudTexture);
+            SAMPLER(sampler_CloudTexture);
+            
+            CBUFFER_START(UnityPerMaterial)
+                float4 _FrontColor;
+                float4 _BackColor;
+                float4 _FresnelColor;
+                float4 _MainTexture_ST;
+                float _Smoothness;
+                float _Metallic;
+                float _Alpha;
+                
+                float3 _VertexAmount;
+                float _VertexFreq;
+            
+                float4 _CloudTexture_ST;
+                float4 _CloudDirection;
+                float4 _CloudColor;
+            
+                float4 _DistortionTexture_ST;
+                float _DistortionAmount;
+                float _DistortionSpeed;
+
+            CBUFFER_END
+            
+            TEXTURE2D(_CameraOpaqueTexture);
+                        TEXTURE2D(_DistortionTexture);
+            SAMPLER(sampler_CameraOpaqueTexture);
+            
+            float hash(float2 p)
+            {
+                return frac(sin(dot(p, float2(12.9898, 78.233))) * 43758.5453);
+            }
+                        
+            
+            Varyings vert (Attributes IN)
+            {
+                Varyings OUT;
+
+                float3 pos = IN.positionOS.xyz;
+                float3 norm = IN.normalOS;
+
+                
+                float currentTime = _Time.y * _VertexFreq;
+                float sinDisplace = sin(currentTime + hash(IN.uv2));
+                
+                float3 displacedPos = pos + (norm * (_VertexAmount.xyz / 100) * sinDisplace); // Scale factor of 100 applied to avoid working with tiny float values in the UI.
+                
+                OUT.positionCS = TransformObjectToHClip(displacedPos);
+                OUT.screenPos = ComputeScreenPos(OUT.positionCS);
+                OUT.uv = IN.uv;
+                OUT.uv2 = IN.uv2;
+                OUT.worldNormal = TransformObjectToWorldNormal(IN.normalOS);
+                OUT.worldPos = TransformObjectToWorld(displacedPos);
+                
+                return OUT;
+            }
+
+float4 frag (Varyings IN, bool facing : SV_IsFrontFace) : SV_Target
+{
+    float3 normal = normalize(IN.worldNormal);
+    float3 viewDir = normalize(_WorldSpaceCameraPos - IN.worldPos); 
+    float fresnel = 1.0 - saturate(dot(normal, viewDir));
+    fresnel = pow(1.0 - fresnel, _Smoothness * 2.0);
+    
+    float2 uv = TRANSFORM_TEX(IN.uv, _MainTexture);
+    float4 texColor = SAMPLE_TEXTURE2D(_MainTexture, sampler_MainTexture, uv);
+    
+    float2 distOffset = _DistortionSpeed * _Time.y * 0.01;
+    float2 distUV = IN.uv2 * _DistortionTexture_ST.xy + _DistortionTexture_ST.zw + distOffset;
+    
+    float2 distortion = SAMPLE_TEXTURE2D(_DistortionTexture, sampler_CloudTexture, distUV).rg;
+    distortion *= _DistortionAmount; 
+
+    // Рассчитываем экранные координаты с искажением
+    float2 distortedScreenUV = (IN.screenPos.xy / IN.screenPos.w) + distortion;
+    
+    // Хватаем то, что находится ЗА щитом
+    float3 background = SAMPLE_TEXTURE2D(_CameraOpaqueTexture, sampler_CameraOpaqueTexture, distortedScreenUV).rgb;
+    // ----------------------------------------
+
+    float reflectionElement = pow(fresnel, 2);
+    float relfectionIntensity = _Metallic + fresnel * (1.0 - _Metallic);
+    float3 reflection = 1-(reflectionElement * relfectionIntensity);
+    reflection = pow(reflection,5);
+    
+    float2 cloudOffset = _CloudDirection.xy * _Time.y * 0.01;
+    float2 cloudUV = IN.uv * _CloudTexture_ST.xy + cloudOffset;
+    float2 cloudUV2 = IN.uv * _CloudTexture_ST.xy + cloudOffset * 2; 
+    
+    float cloudValue = SAMPLE_TEXTURE2D(_CloudTexture, sampler_CloudTexture, cloudUV).r;
+    float cloudValue2 = SAMPLE_TEXTURE2D(_CloudTexture, sampler_CloudTexture, cloudUV2).r;
+
+    float4 shieldColor = facing ? _FrontColor : _BackColor;
+    float faceWeight = facing ? 1.0 : 0.0;
+    
+    float3 emission = _FresnelColor.rgb * texColor.rgb * reflection * faceWeight * cloudValue;
+    float3 cloudEmission = reflection * faceWeight * cloudValue2 * _CloudColor.rgb;
+    float3 albedo = shieldColor.rgb * texColor.rgb;
+    
+    float3 shieldResult = albedo + emission + cloudEmission;
+    float3 finalRGB = lerp(background, shieldResult, _Alpha); 
+
+    return float4(finalRGB, 1.0); 
+}
+            ENDHLSL
+        }
+    }
+}
+
