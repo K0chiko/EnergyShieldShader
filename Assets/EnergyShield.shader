@@ -21,6 +21,10 @@ Shader "Custom/EnergyShield"
         _DistortionAmount ("Distortion Amount", Range(0, 1)) = 0.1
         _DistortionSpeed ("Distortion Speed", float) = 0.1
         
+        _HexScale ("Hex Scale", float) = 10
+        _HexWireWidth ("Hex Wire Width", Range(0, 0.5)) = 0.05
+        [HDR] _HexColor ("Hex Color", Color) = (1, 1, 1, 1)
+                
     }
 
     SubShader
@@ -90,6 +94,10 @@ Shader "Custom/EnergyShield"
                 float _HitRadius;
                 float _HitStrength;
                 float4 _HitColor;
+            
+                float _HexScale;
+                float _HexWireWidth;
+                float4 _HexColor;
             CBUFFER_END
             
             TEXTURE2D(_CameraOpaqueTexture);
@@ -100,7 +108,28 @@ Shader "Custom/EnergyShield"
             {
                 return frac(sin(dot(p, float2(12.9898, 78.233))) * 43758.5453);
             }
-                        
+            
+            float hexDist(float2 p) 
+            {
+                p = abs(p);
+                float d = dot(p, normalize(float2(1, 1.73)));
+                return max(d, p.x);
+            }   
+            
+            float getHexGrid(float2 uv) {
+                float2 r = float2(1, 1.73);
+                float2 h = r * 0.5;
+                
+
+                float2 a = fmod(uv, r) - h;
+                float2 b = fmod(uv - h, r) - h;
+                
+                float2 g = dot(a, a) < dot(b, b) ? a : b;
+                
+                float d = hexDist(g);
+                return smoothstep(0.5 - _HexWireWidth, 0.5, d);
+            }            
+            
             
             Varyings vert (Attributes IN)
             {
@@ -109,7 +138,6 @@ Shader "Custom/EnergyShield"
                 float dist = distance(_HitPos.xyz, worldPos);
                 float hitMask = saturate(1.0 - (dist / _HitRadius));
                 
-               // hitMask = pow(hitMask, 1.5); // sharp or soft 
                 float3 displacement = IN.normalOS * hitMask * _HitStrength;
                 
                 float3 pos = IN.positionOS.xyz;
@@ -175,9 +203,15 @@ float4 frag (Varyings IN, bool facing : SV_IsFrontFace) : SV_Target
     float3 albedo = shieldColor.rgb * texColor.rgb;
     
     float3 shieldResult = albedo + emission + cloudEmission;
-    float3 finalRGB = lerp(background, shieldResult, _Alpha); 
+    float3 finalRGB = lerp(background, shieldResult, texColor.a); 
+    
+    float2 hexUV = IN.uv * _HexScale;
 
-    return float4(finalRGB, 1.0); 
+    float hexMask = getHexGrid(hexUV * _HexScale);
+    float3 hexEmission = hexMask * _HexColor.rgb * faceWeight;
+    finalRGB += hexEmission;
+
+    return float4(finalRGB, _Alpha); 
 }
             ENDHLSL
         }

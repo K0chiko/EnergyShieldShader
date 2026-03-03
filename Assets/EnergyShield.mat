@@ -41,28 +41,33 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
-    - _Alpha: 0.213
+    - _Alpha: 0.96
     - _DistortionAmount: 0.049
     - _DistortionSpeed: 5
+    - _HexScale: 5.42
+    - _HexWireWidth: 0.065
     - _HitRadius: 50.1
     - _HitStrength: 21.85
     - _HitTime: -28.36
     - _Metallic: 0
-    - _Smoothness: 0.169
+    - _Smoothness: 0.263
     - _Time: 1
     - _VertexAmount: 0
     - _VertexFreq: 1
     m_Colors:
     - _BackColor: {r: 0.05486263, g: 0.21525948, b: 0.67621446, a: 1}
-    - _CloudColor: {r: 28.694675, g: 0, b: 230.88295, a: 1}
+    - _CloudColor: {r: 18.060534, g: 0, b: 145.31857, a: 1}
     - _CloudDirection: {r: 1, g: 1, b: 0, a: 0}
     - _CloudTiling: {r: 70.49, g: 1, b: 0, a: 0}
     - _EmissionColor: {r: 2.3999996, g: 2.030561, b: 0, a: 1}
     - _FresnelColor: {r: 0, g: 20.519133, b: 191.74902, a: 1}
-    - _FrontColor: {r: 0.33253074, g: 1.0378875, b: 1.2679234, a: 1}
+    - _FrontColor: {r: 0.23209304, g: 0.7244036, b: 0.88495934, a: 1}
+    - _HexColor: {r: 0.28235292, g: 0.40071088, b: 1.0352942, a: 1}
     - _HitColor: {r: 1, g: 1, b: 1, a: 1}
     - _HitPos: {r: -3.29, g: 1.91, b: 0, a: 0}
     - _MainColor: {r: 0, g: 1, b: 1, a: 1}
-    - _VertexAmount: {r: 11, g: 11, b: 11, a: 0}
+    - _VertexAmount: {r: 5, g: 5, b: 5, a: 0}
+    - _VertexAmountMax: {r: 3, g: 3, b: 3, a: 1}
+    - _VertexAmountMin: {r: 0, g: 0, b: 0, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1
