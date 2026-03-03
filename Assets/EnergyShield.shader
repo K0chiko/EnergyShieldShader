@@ -20,6 +20,7 @@ Shader "Custom/EnergyShield"
         _DistortionTexture ("Distortion Texture (Normal/Noise)", 2D) = "bump" {}
         _DistortionAmount ("Distortion Amount", Range(0, 1)) = 0.1
         _DistortionSpeed ("Distortion Speed", float) = 0.1
+        
     }
 
     SubShader
@@ -83,6 +84,12 @@ Shader "Custom/EnergyShield"
                 float _DistortionAmount;
                 float _DistortionSpeed;
 
+            
+                float4 _HitPos;
+                float _HitTime;
+                float _HitRadius;
+                float _HitStrength;
+                float4 _HitColor;
             CBUFFER_END
             
             TEXTURE2D(_CameraOpaqueTexture);
@@ -98,7 +105,13 @@ Shader "Custom/EnergyShield"
             Varyings vert (Attributes IN)
             {
                 Varyings OUT;
-
+                float3 worldPos = TransformObjectToWorld(IN.positionOS.xyz);
+                float dist = distance(_HitPos.xyz, worldPos);
+                float hitMask = saturate(1.0 - (dist / _HitRadius));
+                
+               // hitMask = pow(hitMask, 1.5); // sharp or soft 
+                float3 displacement = IN.normalOS * hitMask * _HitStrength;
+                
                 float3 pos = IN.positionOS.xyz;
                 float3 norm = IN.normalOS;
 
@@ -107,8 +120,9 @@ Shader "Custom/EnergyShield"
                 float sinDisplace = sin(currentTime + hash(IN.uv2));
                 
                 float3 displacedPos = pos + (norm * (_VertexAmount.xyz / 100) * sinDisplace); // Scale factor of 100 applied to avoid working with tiny float values in the UI.
+                float3 finalPosOS = displacement + displacedPos;
                 
-                OUT.positionCS = TransformObjectToHClip(displacedPos);
+                OUT.positionCS = TransformObjectToHClip(finalPosOS);
                 OUT.screenPos = ComputeScreenPos(OUT.positionCS);
                 OUT.uv = IN.uv;
                 OUT.uv2 = IN.uv2;
@@ -117,13 +131,16 @@ Shader "Custom/EnergyShield"
                 
                 return OUT;
             }
+            
+
+            
 
 float4 frag (Varyings IN, bool facing : SV_IsFrontFace) : SV_Target
 {
     float3 normal = normalize(IN.worldNormal);
     float3 viewDir = normalize(_WorldSpaceCameraPos - IN.worldPos); 
     float fresnel = 1.0 - saturate(dot(normal, viewDir));
-    fresnel = pow(1.0 - fresnel, _Smoothness * 2.0);
+    fresnel = pow(1.0 - fresnel, _Smoothness * 2.0 + 0.00001);
     
     float2 uv = TRANSFORM_TEX(IN.uv, _MainTexture);
     float4 texColor = SAMPLE_TEXTURE2D(_MainTexture, sampler_MainTexture, uv);
@@ -133,13 +150,10 @@ float4 frag (Varyings IN, bool facing : SV_IsFrontFace) : SV_Target
     
     float2 distortion = SAMPLE_TEXTURE2D(_DistortionTexture, sampler_CloudTexture, distUV).rg;
     distortion *= _DistortionAmount; 
-
-    // Рассчитываем экранные координаты с искажением
+    
     float2 distortedScreenUV = (IN.screenPos.xy / IN.screenPos.w) + distortion;
     
-    // Хватаем то, что находится ЗА щитом
     float3 background = SAMPLE_TEXTURE2D(_CameraOpaqueTexture, sampler_CameraOpaqueTexture, distortedScreenUV).rgb;
-    // ----------------------------------------
 
     float reflectionElement = pow(fresnel, 2);
     float relfectionIntensity = _Metallic + fresnel * (1.0 - _Metallic);

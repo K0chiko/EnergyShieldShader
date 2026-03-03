@@ -41,11 +41,14 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
-    - _Alpha: 0.117
-    - _DistortionAmount: 0.038
+    - _Alpha: 0.213
+    - _DistortionAmount: 0.049
     - _DistortionSpeed: 5
+    - _HitRadius: 50.1
+    - _HitStrength: 21.85
+    - _HitTime: -28.36
     - _Metallic: 0
-    - _Smoothness: 0.176
+    - _Smoothness: 0.169
     - _Time: 1
     - _VertexAmount: 0
     - _VertexFreq: 1
@@ -57,6 +60,8 @@ Material:
     - _EmissionColor: {r: 2.3999996, g: 2.030561, b: 0, a: 1}
     - _FresnelColor: {r: 0, g: 20.519133, b: 191.74902, a: 1}
     - _FrontColor: {r: 0.33253074, g: 1.0378875, b: 1.2679234, a: 1}
+    - _HitColor: {r: 1, g: 1, b: 1, a: 1}
+    - _HitPos: {r: -3.29, g: 1.91, b: 0, a: 0}
     - _MainColor: {r: 0, g: 1, b: 1, a: 1}
     - _VertexAmount: {r: 11, g: 11, b: 11, a: 0}
   m_BuildTextureStacks: []
