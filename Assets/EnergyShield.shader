@@ -1,31 +1,48 @@
 Shader "Custom/EnergyShield"
 {
-    Properties
-    {
-        [HDR] _FrontColor ("FrontColor", Color) = (0, 1, 1, 1)
-        [HDR] _BackColor ("BackColor", Color) = (0, 0.5, 1, 1)
-        [HDR] _FresnelColor ("FresnelColor", Color) = (1, 0, 1, 1)
-        _MainTexture ("Shield Texture", 2D) = "white" {}
-        _Smoothness ("Smoothness", Range(0,1)) = 0.5
-        _Metallic ("Metallic", Range(0,1)) = 0.0
-        _Alpha ("Alpha", Range(0,1)) = 0.0
-        
-        [Vector3]_VertexAmount ("VertexAmount", Vector) = (0.0, 0.0, 0.0)
-        _VertexFreq ("VertexFreq", float) = 1
-        
-        _CloudTexture ("Cloud Texture (R)", 2D) = "white" {}
-        [HDR] _CloudColor ("CloudColor", Color) = (0.8, 0.8, 0.8, 1)
-        _CloudDirection ("Cloud Direction/Speed", Vector) = (0.1, 0.1, 0, 0)
-        
-        _DistortionTexture ("Distortion Texture (Normal/Noise)", 2D) = "bump" {}
-        _DistortionAmount ("Distortion Amount", Range(0, 1)) = 0.1
-        _DistortionSpeed ("Distortion Speed", float) = 0.1
-        
-        _HexScale ("Hex Scale", float) = 10
-        _HexWireWidth ("Hex Wire Width", Range(0, 0.5)) = 0.05
-        [HDR] _HexColor ("Hex Color", Color) = (1, 1, 1, 1)
-                
-    }
+Properties
+{
+    [Header(Main Colors)] [Space(5)]
+    [HDR] _FrontColor ("Front Color", Color) = (0, 1, 1, 1)
+    [HDR] _BackColor ("Back Color", Color) = (0, 0.5, 1, 1)
+    [HDR] _FresnelColor ("Fresnel Color", Color) = (1, 0, 1, 1)
+    
+    [Space(10)]
+    [Header(Surface Settings)] [Space(5)]
+    _MainTexture ("Shield Texture", 2D) = "white" {}
+    _Smoothness ("Smoothness", Range(0,1)) = 0.5
+    _Metallic ("Metallic", Range(0,1)) = 0.0
+    _Alpha ("Alpha", Range(0,1)) = 0.0
+    
+    [Space(10)]
+    [Header(Vertex Animation)] [Space(5)]
+    [Vector3]_VertexAmount ("Vertex Amount", Vector) = (0.0, 0.0, 0.0)
+    _VertexFreq ("Vertex Freq", float) = 1
+    
+    [Space(10)]
+    [Header(Cloud Settings)] [Space(5)]
+    _CloudTexture ("Cloud Texture (R)", 2D) = "white" {}
+    [HDR] _CloudColor ("Cloud Color", Color) = (0.8, 0.8, 0.8, 1)
+    _CloudDirection ("Cloud Direction/Speed", Vector) = (0.1, 0.1, 0, 0)
+    
+    [Space(10)]
+    [Header(Distortion)] [Space(5)]
+    _DistortionTexture ("Distortion Texture", 2D) = "bump" {}
+    _DistortionAmount ("Distortion Amount", Range(0, 1)) = 0.1
+    _DistortionSpeed ("Distortion Speed", float) = 0.1
+    
+    [Space(10)]
+    [Header(Hexagon Grid)] [Space(5)]
+    _HexScale ("Hex Scale", float) = 10
+    _HexWireWidth ("Hex Wire Width", Range(0, 0.5)) = 0.05
+    [HDR] _HexColor ("Hex Color", Color) = (1, 1, 1, 1)
+    _hexPulseSpeed ("Hex Pulse Speed", float) = 1.0
+    _hexPulseFading ("Hex Pulse Fading", float) = 0.2
+    
+    [Space(10)]
+    [Header(Effects)] [Space(5)]
+    [HDR] _HitColor ("Hit Color", Color) = (1,0,0,1)
+}
 
     SubShader
     {
@@ -61,6 +78,7 @@ Shader "Custom/EnergyShield"
                 float3 worldNormal  : TEXCOORD2;
                 float3 worldPos     : TEXCOORD3;
                 float4 screenPos    : TEXCOORD4;
+                float hitMask       : TEXCOORD5;
             };
 
             TEXTURE2D(_MainTexture);          
@@ -98,6 +116,8 @@ Shader "Custom/EnergyShield"
                 float _HexScale;
                 float _HexWireWidth;
                 float4 _HexColor;
+                float _hexPulseSpeed;
+                float _hexPulseFading;
             CBUFFER_END
             
             TEXTURE2D(_CameraOpaqueTexture);
@@ -156,6 +176,7 @@ Shader "Custom/EnergyShield"
                 OUT.uv2 = IN.uv2;
                 OUT.worldNormal = TransformObjectToWorldNormal(IN.normalOS);
                 OUT.worldPos = TransformObjectToWorld(displacedPos);
+                OUT.hitMask = hitMask * _HitStrength;
                 
                 return OUT;
             }
@@ -203,11 +224,24 @@ float4 frag (Varyings IN, bool facing : SV_IsFrontFace) : SV_Target
     float3 albedo = shieldColor.rgb * texColor.rgb;
     
     float3 shieldResult = albedo + emission + cloudEmission;
+    float hitEffect = IN.hitMask;
+    
+    //hitEffect = pow(hitEffect,2.0);
+    
+   shieldResult = lerp(shieldResult, _HitColor.rgb, hitEffect);
+  shieldResult += _HitColor.rgb * hitEffect;
+    /*float pulse = sin(_Time.y * 20.0) * 0.5 + 0.5;
+shieldResult += _HitColor.rgb * hitEffect * pulse;*/
+
+    
     float3 finalRGB = lerp(background, shieldResult, texColor.a); 
     
     float2 hexUV = IN.uv * _HexScale;
 
-    float hexMask = getHexGrid(hexUV * _HexScale);
+    float hexPulseWave = abs(sin(_Time.y - hexUV.x * 0.3));
+    float hexPulse = lerp(_hexPulseFading, 1, hexPulseWave  * _hexPulseSpeed) * cloudValue;
+    float hexMask = getHexGrid(hexUV * _HexScale) * hexPulse;
+
     float3 hexEmission = hexMask * _HexColor.rgb * faceWeight;
     finalRGB += hexEmission;
 
