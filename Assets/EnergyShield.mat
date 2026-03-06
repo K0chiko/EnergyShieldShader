@@ -53,7 +53,10 @@ Material:
     - _Smoothness: 0.171
     - _Time: 1
     - _VertexAmount: 0
+    - _VertexAnimAlpha: 1
     - _VertexFreq: 1
+    - _VertexIn: 0
+    - _VertexOut: 58.2
     - _hexPulseFading: 0.3
     - _hexPulseSpeed: 0.8
     m_Colors:
@@ -71,5 +74,7 @@ Material:
     - _VertexAmount: {r: 8, g: 8, b: 8, a: 0}
     - _VertexAmountMax: {r: 3, g: 3, b: 3, a: 1}
     - _VertexAmountMin: {r: 0, g: 0, b: 0, a: 1}
+    - _VertexIn: {r: 8, g: 8, b: 8, a: 1}
+    - _VertexOut: {r: 8, g: 8, b: 8, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

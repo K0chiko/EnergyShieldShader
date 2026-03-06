@@ -16,8 +16,10 @@ Properties
     
     [Space(10)]
     [Header(Vertex Animation)] [Space(5)]
-    [Vector3]_VertexAmount ("Vertex Amount", Vector) = (0.0, 0.0, 0.0)
+    [Vector3]_VertexOut ("Vertex Amount Out", Vector) = (0.0, 0.0, 0.0)
+    [Vector3]_VertexIn ("Vertex Amount In", Vector) = (0.0, 0.0, 0.0)
     _VertexFreq ("Vertex Freq", float) = 1
+    _VertexAnimAlpha ("Animation Strength", Range(0, 1)) = 0
     
     [Space(10)]
     [Header(Cloud Settings)] [Space(5)]
@@ -50,7 +52,6 @@ Properties
         LOD 100
         ZWrite Off
         Blend SrcAlpha One // Additive blending
-        //Blend One Zero
         Cull Off
         
         Pass
@@ -94,9 +95,11 @@ Properties
                 float _Smoothness;
                 float _Metallic;
                 float _Alpha;
-                
-                float3 _VertexAmount;
+            
+                float3 _VertexOut;
+                float3 _VertexIn;
                 float _VertexFreq;
+                float _VertexAnimAlpha;
             
                 float4 _CloudTexture_ST;
                 float4 _CloudDirection;
@@ -165,9 +168,10 @@ Properties
 
                 
                 float currentTime = _Time.y * _VertexFreq;
-                float sinDisplace = sin(currentTime + hash(IN.uv2));
+                float sinDisplace = sin(currentTime + hash(IN.uv2)) * _VertexAnimAlpha;
+                float3 currentVertexAmount = (sinDisplace > 0) ? _VertexOut : _VertexIn;
                 
-                float3 displacedPos = pos + (norm * (_VertexAmount.xyz / 100) * sinDisplace); // Scale factor of 100 applied to avoid working with tiny float values in the UI.
+                float3 displacedPos = pos + (norm * (currentVertexAmount.xyz / 100) * sinDisplace); // Scale factor of 100 applied to avoid working with tiny float values in the UI.
                 float3 finalPosOS = displacement + displacedPos;
                 
                 OUT.positionCS = TransformObjectToHClip(finalPosOS);
@@ -226,12 +230,9 @@ float4 frag (Varyings IN, bool facing : SV_IsFrontFace) : SV_Target
     float3 shieldResult = albedo + emission + cloudEmission;
     float hitEffect = IN.hitMask;
     
-    //hitEffect = pow(hitEffect,2.0);
     
-   shieldResult = lerp(shieldResult, _HitColor.rgb, hitEffect);
-  shieldResult += _HitColor.rgb * hitEffect;
-    /*float pulse = sin(_Time.y * 20.0) * 0.5 + 0.5;
-shieldResult += _HitColor.rgb * hitEffect * pulse;*/
+    shieldResult = lerp(shieldResult, _HitColor.rgb, hitEffect);
+    shieldResult += _HitColor.rgb * hitEffect;
 
     
     float3 finalRGB = lerp(background, shieldResult, texColor.a); 

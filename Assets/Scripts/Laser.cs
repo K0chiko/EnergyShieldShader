@@ -26,7 +26,6 @@ namespace SideViewShooter
         private Renderer _currentShieldRenderer;
         private Material _instancedShieldMaterial;
         
-        // Добавляем флаг фактического попадания
         private bool _isHittingShieldNow;
 
         private void Awake()

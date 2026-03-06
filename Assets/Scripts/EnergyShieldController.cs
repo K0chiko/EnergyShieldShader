@@ -17,7 +17,7 @@ namespace EnergyShield
         [Header("Animator Parameters")]
         [SerializeField] private string deployTrigger = "Deploy";
         [SerializeField] private string retractTrigger = "Retract";
-        [SerializeField] private string hitTrigger = "Hit";
+        [SerializeField] private string isUnderAttackBool = "IsUnderAttack";
         [SerializeField] private string destroyTrigger = "Destroy";
 
         [Header("Health")]
@@ -26,6 +26,10 @@ namespace EnergyShield
 
         [Header("Behavior")]
         [SerializeField] private bool activeOnEnable = false;
+        
+        [Header("Hit Settings")]
+        [SerializeField] private float hitResetDelay = 0.5f; 
+        private float _lastHitTime;
 
         bool _isDeployed;
 
@@ -60,10 +64,7 @@ namespace EnergyShield
         }
 
  
-
-        /// <summary>
-        /// Called from Interact button. Toggles deploy/retract.
-        /// </summary>
+        
         public void Play()
         {
             if (_isDeployed)
@@ -92,7 +93,14 @@ namespace EnergyShield
 
             Trigger(retractTrigger); 
         }
-
+        void Update()
+        {
+            if (_isDeployed && Time.time - _lastHitTime > hitResetDelay)
+            {
+                SetUnderAttack(false);
+            }
+        }
+        
         public void RegisterHit(float damage, Vector3 hitPoint)
         {
             if (!_isDeployed || currentHealth <= 0) return;
@@ -102,12 +110,20 @@ namespace EnergyShield
 
             if (currentHealth > 0)
             {
-                Trigger(hitTrigger);
+                _lastHitTime = Time.time; 
+                SetUnderAttack(true);
             }
             else
             {
+                SetUnderAttack(false);
                 Trigger(destroyTrigger);
-
+            }
+        }
+        private void SetUnderAttack(bool active)
+        {
+            if (animator)
+            {
+                animator.SetBool(isUnderAttackBool, active);
             }
         }
 
@@ -147,7 +163,6 @@ namespace EnergyShield
         {
             if (animator && !string.IsNullOrEmpty(trigger))
             {
-                animator.ResetTrigger(hitTrigger);
                 animator.ResetTrigger(retractTrigger);
                 animator.ResetTrigger(deployTrigger);
                 animator.ResetTrigger(destroyTrigger);
