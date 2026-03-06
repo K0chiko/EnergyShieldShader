@@ -189,11 +189,12 @@ MonoBehaviour:
   shieldCollider: {fileID: 50332620}
   deployTrigger: Deploy
   retractTrigger: Retract
-  hitTrigger: Hit
+  isUnderAttackBool: IsUnderAttack
   destroyTrigger: Destroy
   maxHealth: 100
   currentHealth: 0
   activeOnEnable: 0
+  hitResetDelay: 0
 --- !u!1 &100290587
 GameObject:
   m_ObjectHideFlags: 0
@@ -913,7 +914,7 @@ MonoBehaviour:
   hitRadius: 0.8
   lerpSpeed: 10
   range: 50
-  damagePerSecond: 25
+  damagePerSecond: 35
 --- !u!1 &541621798
 GameObject:
   m_ObjectHideFlags: 0

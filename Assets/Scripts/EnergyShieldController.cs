@@ -21,8 +21,8 @@ namespace EnergyShield
         [SerializeField] private string destroyTrigger = "Destroy";
 
         [Header("Health")]
-        [Min(1)] [SerializeField] private int maxHealth = 100;
-        [SerializeField] private int currentHealth;
+        [Min(1)] [SerializeField] private float maxHealth = 100;
+        [SerializeField] private float currentHealth;
 
         [Header("Behavior")]
         [SerializeField] private bool activeOnEnable = false;
@@ -105,8 +105,8 @@ namespace EnergyShield
         {
             if (!_isDeployed || currentHealth <= 0) return;
 
-            int dmg = Mathf.Max(0, Mathf.RoundToInt(damage));
-            currentHealth = Mathf.Max(0, currentHealth - dmg);
+            currentHealth -= damage; 
+            currentHealth = Mathf.Max(0, currentHealth);
 
             if (currentHealth > 0)
             {
@@ -171,8 +171,8 @@ namespace EnergyShield
         }
 
         public bool IsDeployed => _isDeployed;
-        public int CurrentHealth => currentHealth;
-        public int MaxHealth => maxHealth;
+        public float CurrentHealth => currentHealth;
+        public float MaxHealth => maxHealth;
     }
 }
 
