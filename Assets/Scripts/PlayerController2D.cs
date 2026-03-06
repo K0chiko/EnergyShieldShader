@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using EnergyShield;
+using UnityEngine;
 using UnityEngine.InputSystem; 
 
 namespace SideViewShooter
@@ -24,6 +25,10 @@ namespace SideViewShooter
         
         private InputAction _moveAction;
         private InputAction _jumpAction;
+        private InputAction _interactAction;
+
+        [Header("Shield reference")] 
+        public EnergyShieldController shield;
 
         private void Awake()
         {
@@ -32,6 +37,7 @@ namespace SideViewShooter
             var playerInput = GetComponent<PlayerInput>();
             _moveAction = playerInput.actions["Move"]; 
             _jumpAction = playerInput.actions["Jump"]; 
+            _interactAction = playerInput.actions["Interact"]; 
 
             _rb.constraints = RigidbodyConstraints.FreezeRotationX | RigidbodyConstraints.FreezeRotationY |
                               RigidbodyConstraints.FreezeRotationZ | RigidbodyConstraints.FreezePositionZ;
@@ -56,6 +62,19 @@ namespace SideViewShooter
             else if (_inputX < -0.01f && _facingRight)
             {
                 Flip(false);
+            }
+
+            if (_interactAction.triggered)
+            {
+                if (shield != null)
+                {
+                    shield.Play(); 
+                    Debug.Log("Shield: Play() toggled");
+                }
+                else
+                {
+                    Debug.LogWarning("Interact pressed but no EnergyShieldController is assigned.");
+                }
             }
         }
 

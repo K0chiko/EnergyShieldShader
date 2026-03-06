@@ -1,5 +1,7 @@
 using UnityEngine;
-using UnityEngine.InputSystem; 
+using UnityEngine.InputSystem;
+using EnergyShield;
+
 namespace SideViewShooter
 {
     public class LaserController : MonoBehaviour
@@ -15,14 +17,21 @@ namespace SideViewShooter
         [SerializeField] private float lerpSpeed = 10f;
         [SerializeField] private float range = 50f;
 
+        [Header("Damage")]
+        [SerializeField] private float damagePerSecond = 25f;
+
         private InputAction _attackAction;
         private float _currentStrength;
-        private Material _shieldMaterial;
+        
+        private Renderer _currentShieldRenderer;
+        private Material _instancedShieldMaterial;
+        
+        // Добавляем флаг фактического попадания
+        private bool _isHittingShieldNow;
 
         private void Awake()
         {
             var playerInput = GetComponent<PlayerInput>();
-            
             _attackAction = playerInput.actions["Attack"];
         }
 
@@ -37,15 +46,22 @@ namespace SideViewShooter
             else
             {
                 StopLaser();
+                _isHittingShieldNow = false;
             }
-
-
-            float targetStrength = isAttacking ? maxStrength : 0f;
+            
+            float targetStrength = (isAttacking && _isHittingShieldNow) ? maxStrength : 0f;
+            
             _currentStrength = Mathf.Lerp(_currentStrength, targetStrength, Time.deltaTime * lerpSpeed);
             
-            if (_shieldMaterial != null)
+            if (_instancedShieldMaterial != null)
             {
-                _shieldMaterial.SetFloat("_HitStrength", _currentStrength);
+                _instancedShieldMaterial.SetFloat("_HitStrength", _currentStrength);
+                
+                if (!isAttacking && _currentStrength < 0.01f)
+                {
+                    _currentShieldRenderer = null;
+                    _instancedShieldMaterial = null;
+                }
             }
         }
 
@@ -55,11 +71,24 @@ namespace SideViewShooter
             
             if (Physics.Raycast(ray, out RaycastHit hit, range, shieldLayer))
             {
-                _shieldMaterial = hit.collider.GetComponent<Renderer>().material;
-                
-                _shieldMaterial.SetVector("_HitPos", hit.point);
-                _shieldMaterial.SetFloat("_HitRadius", hitRadius);
-                
+                _isHittingShieldNow = true;
+                Renderer hitRenderer = hit.collider.GetComponent<Renderer>();
+            
+                if (_currentShieldRenderer != hitRenderer)
+                {
+                    _currentShieldRenderer = hitRenderer;
+                    _instancedShieldMaterial = hitRenderer.material;
+                }
+
+                _instancedShieldMaterial.SetVector("_HitPos", hit.point);
+                _instancedShieldMaterial.SetFloat("_HitRadius", hitRadius);
+
+                var shield = hit.collider.GetComponentInParent<EnergyShieldController>();
+                if (shield != null)
+                {
+                    shield.RegisterHit(damagePerSecond * Time.deltaTime, hit.point);
+                }
+
                 if (laserLine != null)
                 {
                     laserLine.enabled = true;
@@ -69,6 +98,8 @@ namespace SideViewShooter
             }
             else
             {
+                _isHittingShieldNow = false; 
+                
                 if (laserLine != null)
                 {
                     laserLine.enabled = true;

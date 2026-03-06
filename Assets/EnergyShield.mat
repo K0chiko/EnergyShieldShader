@@ -58,7 +58,7 @@ Material:
     - _hexPulseSpeed: 0.8
     m_Colors:
     - _BackColor: {r: 0.05486263, g: 0.21525948, b: 0.67621446, a: 1}
-    - _CloudColor: {r: 18.060534, g: 0, b: 145.31857, a: 1}
+    - _CloudColor: {r: 1.1287833, g: 0, b: 9.082411, a: 1}
     - _CloudDirection: {r: 3, g: 5, b: 0, a: 0}
     - _CloudTiling: {r: 70.49, g: 1, b: 0, a: 0}
     - _EmissionColor: {r: 2.3999996, g: 2.030561, b: 0, a: 1}
