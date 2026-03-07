@@ -42,7 +42,7 @@ Material:
     m_Ints: []
     m_Floats:
     - _Alpha: 0.29
-    - _DistortionAmount: 0.049
+    - _DistortionAmount: 0.07
     - _DistortionSpeed: 5
     - _HexDepth: 0
     - _HexScale: 3
