@@ -44,8 +44,9 @@ Material:
     - _Alpha: 0.29
     - _DistortionAmount: 0.049
     - _DistortionSpeed: 5
+    - _HexDepth: 0
     - _HexScale: 3
-    - _HexWireWidth: 0.1
+    - _HexWireWidth: 0.067
     - _HitRadius: 50.1
     - _HitStrength: 21.85
     - _HitTime: -28.36
