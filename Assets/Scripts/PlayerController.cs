@@ -67,7 +67,7 @@ public class PlayerController : MonoBehaviour
             Toggle(hintToEnableDisable);
         }
 
-        ApplyRotation();
+        //ApplyRotation();
 
         if (_interactAction.triggered && shield != null)
         {
