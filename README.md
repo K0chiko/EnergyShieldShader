@@ -1,12 +1,14 @@
 # URP Energy Shield Shader (HLSL)
 
 A professional, high-performance energy shield shader for Unity **Universal Render Pipeline (URP)**, written in pure **HLSL**. Optimized for Unity 6.
-<img width="1253" height="1075" alt="Cover" src="https://github.com/user-attachments/assets/1eb304be-8835-49ed-96c5-f64c10a64c0a" />
 
-https://github.com/user-attachments/assets/b3e1c9c3-24e5-45df-b34c-e31e1533a5ec
+<img width="1024" height="800" alt="Cover" src="https://github.com/user-attachments/assets/4b2d2d0e-576f-4e8a-a424-091a1f6f7cbe" />
+
+https://github.com/user-attachments/assets/e7d1347e-a0a7-4113-b940-70082c7c3da3
+
+https://github.com/user-attachments/assets/27843d4d-1452-4007-9b18-f88905fd3026
 
 
-https://github.com/user-attachments/assets/2867e74c-ec37-4908-8548-b3718e05b4e4
 
 
 ## Features
